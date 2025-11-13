@@ -1,0 +1,38 @@
+# ---- Node / React (frontEnd) ----
+node_modules/
+dist/
+build/
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ---- Spring Boot / Java (backend) ----
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+*.tmp
+*.swp
+
+# ---- OS / Editor files ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.bak
+
+# ---- Uploads / Generated files ----
+uploads/
+
+# ---- Docker / Containers ----
+*.pid
+*.seed
+*.pid.lock
+
+# ---- Misc ----
+*.env
