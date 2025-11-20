@@ -26,6 +26,7 @@ Clean fallback: If authToken isn’t present, requests still work (unauthenticat
 Scoped config: Only requests made via your API instance get this behavior—nice separation.
 */
 API.interceptors.request.use((config) => {
+  console.log("API call:", config.baseURL + config.url, config.method);
   const token = localStorage.getItem("authToken");
 
   // Check if the request URL starts with any public URL

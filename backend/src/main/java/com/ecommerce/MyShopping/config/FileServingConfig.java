@@ -11,7 +11,11 @@ public class FileServingConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String uploadPath = new File("MyShopping/uploads").getAbsolutePath();
+        // String uploadPath = new File("MyShopping/uploads").getAbsolutePath(); This
+        // path was for development purpose and it stays on system.
+
+        // Absolute path inside the container.
+        String uploadPath = "/app/uploads";
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + uploadPath + "/")
                 .setCachePeriod(3600);

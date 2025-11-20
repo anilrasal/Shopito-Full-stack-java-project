@@ -50,6 +50,9 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Value("${app.upload.dir}")
+    private String uploadDir;
+
     // private final String basePhoneImagePath =
     // "http://localhost:8080/uploads/phones/";
 
@@ -74,17 +77,25 @@ public class ProductController {
             if (contentType == null || !contentType.startsWith("image/")) {
                 throw new IllegalArgumentException("Only image files are allowed");
             }
-            // Generate Unique filename
-            String uniqueFileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
 
-            // Resolve absolute path.
-            String uploadDir = new File("MyShopping/uploads/phones").getAbsolutePath();
+            // Validates null file name and set unnamed.
+            String originalName = Optional.ofNullable(imageFile.getOriginalFilename())
+                    .filter(name -> !name.isBlank())
+                    .orElse("unnamed.png");
+
+            // Generate Unique filename
+            String uniqueFileName = UUID.randomUUID().toString() + "_" + originalName;
+
+            // Resolve absolute path on development system.
+            // String uploadDir = new File("MyShopping/uploads/phones").getAbsolutePath();
+            String uploadDir = "/app/uploads/phones"; // Inside container
             Path uploadPath = Paths.get(uploadDir);
 
             // Check if directory exists.
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
+
             // Get the path of the file which is generated.
             Path filePath = uploadPath.resolve(uniqueFileName);
 
@@ -97,7 +108,7 @@ public class ProductController {
             product.setName(name);
             product.setCategory(category);
             product.setDescription(description);
-            product.setImageUrl("http://localhost:8080/uploads/phones/" + uniqueFileName);
+            product.setImageUrl("/uploads/phones/" + uniqueFileName);
             product.setInventory(stock);
             product.setPrice(price);
 
@@ -309,19 +320,30 @@ public class ProductController {
                 String oldImageUrl = product.getImageUrl();
                 if (oldImageUrl != null) {
                     String oldFileName = Paths.get(new URI(oldImageUrl).getPath()).getFileName().toString();
-                    Path oldFilePath = Paths.get(new File("MyShopping/uploads/phones").getAbsolutePath(), oldFileName);
+                    // Path oldFilePath = Paths.get(new
+                    // File("MyShopping/uploads/phones").getAbsolutePath(), oldFileName);
+                    // //development device path
+                    Path oldFilePath = Paths.get(uploadDir, oldFileName); // injected path from properties for docker
+                                                                          // volume
+
                     Files.deleteIfExists(oldFilePath);
                 }
 
                 // Save new image
                 String uniqueFileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
-                Path uploadPath = Paths.get(new File("MyShopping/uploads/phones/").getAbsolutePath());
+                // Path uploadPath = Paths.get(new
+                // File("MyShopping/uploads/phones/").getAbsolutePath());
+                Path uploadPath = Paths.get(uploadDir); // injected path from properties for docker volume
+
                 Files.createDirectories(uploadPath);
 
                 Path filePath = uploadPath.resolve(uniqueFileName);
                 Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                product.setImageUrl("http://localhost:8080/uploads/phones/" + uniqueFileName);
+                // product.setImageUrl("http://localhost:8080/uploads/phones/" +
+                // uniqueFileName);
+
+                product.setImageUrl("/uploads/phones/" + uniqueFileName);
 
             } catch (IOException | URISyntaxException e) {
                 e.printStackTrace();

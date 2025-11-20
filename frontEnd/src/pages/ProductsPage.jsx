@@ -1,11 +1,7 @@
 import { Grid,Container, CircularProgress, Alert, Pagination } from "@mui/material"
-import CategorySidebar from "../components/CategorySidebar";
-import mockProducts from "../data/MockProducts"
 import ProductGrid from "../components/ProductGrid";
 import { useEffect, useState } from "react";
-import {getAllProducts} from '../services/productService';
 import CategorySidebarFlex from "../components/category/CategorySidebarFlex";
-import productMapper from "../mapper/mapApiToUi.js"
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts, setCategory } from '../features/product/productSlice.js'
 
