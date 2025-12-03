@@ -31,6 +31,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+
+import org.springframework.beans.factory.annotation.Value;
 
 import com.ecommerce.MyShopping.dto.ProductDTO;
 import com.ecommerce.MyShopping.dto.ProductRequestDTO;
@@ -58,19 +61,25 @@ public class ProductController {
 
     @PostMapping()
     @SecurityRequirement(name = "anil-shopping-api")
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> addProduct(@RequestBody ProductRequestDTO productRequestDTO) {
+        Product product = new Product();
+        product.setName(productRequestDTO.getName());
+        product.setCategory(productRequestDTO.getCategory());
+        product.setDescription(productRequestDTO.getDescription());
+        product.setInventory(productRequestDTO.getAvailableStock());
+        product.setPrice(productRequestDTO.getPrice());
         return ResponseEntity.ok(productService.save(product));
     }
 
-    @PostMapping(value = "/addWithImage", consumes = { "multipart/form-data" })
+    @PostMapping(value = "/addWithImage", consumes = "multipart/form-data")
     @SecurityRequirement(name = "anil-shopping-api")
     public ResponseEntity<Product> addProductWithImage(
-            @RequestParam String name,
-            @RequestParam String description,
-            @RequestParam int stock,
-            @RequestParam BigDecimal price,
-            @RequestParam String category,
-            @RequestParam MultipartFile imageFile) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) BigDecimal price,
+            @RequestParam(required = false) MultipartFile imageFile) {
 
         try {
             String contentType = imageFile.getContentType();
@@ -80,7 +89,7 @@ public class ProductController {
 
             // Validates null file name and set unnamed.
             String originalName = Optional.ofNullable(imageFile.getOriginalFilename())
-                    .filter(name -> !name.isBlank())
+                    .filter(fileName -> !fileName.isBlank())
                     .orElse("unnamed.png");
 
             // Generate Unique filename
@@ -88,7 +97,7 @@ public class ProductController {
 
             // Resolve absolute path on development system.
             // String uploadDir = new File("MyShopping/uploads/phones").getAbsolutePath();
-            String uploadDir = "/app/uploads/phones"; // Inside container
+            // String uploadDir = "/app/uploads/phones"; // Inside container
             Path uploadPath = Paths.get(uploadDir);
 
             // Check if directory exists.
@@ -119,7 +128,79 @@ public class ProductController {
         }
     }
 
-    @PostMapping(value = "/addWithImageData", consumes = { "multipart/form-data" })
+    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
+    @SecurityRequirement(name = "anil-shopping-api")
+    public ResponseEntity<Product> updateProductWithImage(@PathVariable Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) BigDecimal price,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) MultipartFile imageFile) {
+
+        Optional<Product> optionalProduct = productService.findById(id);
+        if (optionalProduct.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Product product = optionalProduct.get();
+        if (name != null)
+            product.setName(name);
+
+        if (category != null)
+            product.setCategory(category);
+
+        if (stock != 0 || stock != null)
+            product.setInventory(stock);
+
+        if (price != null)
+            product.setPrice(price);
+
+        if (description != null)
+            product.setDescription(description);
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                // Delete old image
+                String oldImageUrl = product.getImageUrl();
+                if (oldImageUrl != null) {
+                    String oldFileName = Paths.get(new URI(oldImageUrl).getPath()).getFileName().toString();
+                    // Path oldFilePath = Paths.get(new
+                    // File("MyShopping/uploads/phones").getAbsolutePath(), oldFileName);
+                    // //development device path
+                    Path oldFilePath = Paths.get(uploadDir, oldFileName); // injected path from properties for docker
+                                                                          // volume
+
+                    Files.deleteIfExists(oldFilePath);
+                }
+
+                // Save new image
+                String uniqueFileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
+                // Path uploadPath = Paths.get(new
+                // File("MyShopping/uploads/phones/").getAbsolutePath());
+                Path uploadPath = Paths.get(uploadDir); // injected path from properties for docker volume
+
+                Files.createDirectories(uploadPath);
+
+                Path filePath = uploadPath.resolve(uniqueFileName);
+                Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // product.setImageUrl("http://localhost:8080/uploads/phones/" +
+                // uniqueFileName);
+
+                product.setImageUrl("/uploads/phones/" + uniqueFileName);
+
+            } catch (IOException | URISyntaxException e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+        return ResponseEntity.ok(productService.save(product));
+    }
+
+    // @PostMapping(value = "/addWithImageData", consumes = { "multipart/form-data"
+    // })
+    @PostMapping(value = "/addWithImageData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SecurityRequirement(name = "anil-shopping-api")
     public ResponseEntity<Product> addProductWithImageData(
             @Parameter(description = "Product JSON", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductRequestDTO.class))) @RequestPart("product") ProductRequestDTO productRequestDTO,
@@ -195,8 +276,9 @@ public class ProductController {
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     @SecurityRequirement(name = "anil-shopping-api")
-    public ResponseEntity<?> handleUpload(@RequestParam MultipartFile file) {
-        String uploadDir = new File("MyShopping/uploads/users").getAbsolutePath();
+    public ResponseEntity<?> handleUpload(@RequestParam MultipartFile file, @RequestParam Long id) {
+        // String uploadDir = new File("MyShopping/uploads/users").getAbsolutePath();
+        System.out.println("Received ID is: " + id + " and file name: " + file.getOriginalFilename());
         Path target = Paths.get(uploadDir, file.getOriginalFilename());
         try {
             file.transferTo(target);
@@ -209,7 +291,7 @@ public class ProductController {
     @PostMapping(value = "/upload-multiple", consumes = { "multipart/form-data" })
     @SecurityRequirement(name = "anil-shopping-api")
     public ResponseEntity<?> handleMultipleUpload(@RequestPart("files") MultipartFile files[]) {
-        String uploadDir = new File("MyShopping/uploads/users").getAbsolutePath();
+        // String uploadDir = new File("MyShopping/uploads/users").getAbsolutePath();
         for (MultipartFile file : files) {
             Path target = Paths.get(uploadDir, file.getOriginalFilename());
             if (file.isEmpty()) {
@@ -281,76 +363,6 @@ public class ProductController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body("");
         }
-    }
-
-    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
-    @SecurityRequirement(name = "anil-shopping-api")
-    public ResponseEntity<Product> updateProductWithImage(@PathVariable Long id,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String description,
-            @RequestParam(required = false) Integer stock,
-            @RequestParam(required = false) BigDecimal price,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) MultipartFile imageFile) {
-
-        Optional<Product> optionalProduct = productService.findById(id);
-        if (optionalProduct.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Product product = optionalProduct.get();
-        if (name != null)
-            product.setName(name);
-
-        if (category != null)
-            product.setCategory(category);
-
-        if (stock != 0 || stock != null)
-            product.setInventory(stock);
-
-        if (price != null)
-            product.setPrice(price);
-
-        if (description != null)
-            product.setDescription(description);
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            try {
-                // Delete old image
-                String oldImageUrl = product.getImageUrl();
-                if (oldImageUrl != null) {
-                    String oldFileName = Paths.get(new URI(oldImageUrl).getPath()).getFileName().toString();
-                    // Path oldFilePath = Paths.get(new
-                    // File("MyShopping/uploads/phones").getAbsolutePath(), oldFileName);
-                    // //development device path
-                    Path oldFilePath = Paths.get(uploadDir, oldFileName); // injected path from properties for docker
-                                                                          // volume
-
-                    Files.deleteIfExists(oldFilePath);
-                }
-
-                // Save new image
-                String uniqueFileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
-                // Path uploadPath = Paths.get(new
-                // File("MyShopping/uploads/phones/").getAbsolutePath());
-                Path uploadPath = Paths.get(uploadDir); // injected path from properties for docker volume
-
-                Files.createDirectories(uploadPath);
-
-                Path filePath = uploadPath.resolve(uniqueFileName);
-                Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // product.setImageUrl("http://localhost:8080/uploads/phones/" +
-                // uniqueFileName);
-
-                product.setImageUrl("/uploads/phones/" + uniqueFileName);
-
-            } catch (IOException | URISyntaxException e) {
-                e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-        return ResponseEntity.ok(productService.save(product));
     }
 
 }

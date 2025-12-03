@@ -1,12 +1,16 @@
 services:
   backend:
     build: ./backend
+    restart: on-failure
+    # env_file:
+    #   - ./backend/.env
+    command: ["./wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/shop
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Root@123456
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     depends_on:
       - db
     volumes:
@@ -17,6 +21,10 @@ services:
       context: ./frontend
       args:
         VITE_API_BASE_URL: "/api/"
+    # command: ["npm", "run", "dev"]
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules # avoid overwriting node_modules
     ports:
      - "3000:80" # map container’s port 80 to host port 3000
     depends_on:
@@ -25,11 +33,19 @@ services:
   db:
     image: mysql:8.0
     environment:
+      # avoid using root user in your applications 
       MYSQL_ROOT_PASSWORD: Root@123456
+      MYSQL_USER: user
+      MYSQL_PASSWORD: User@123456
       MYSQL_DATABASE: shop
     # optional: expose to host if you want to connect with local tools
     # ports:
     #   - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - db_data:/var/lib/mysql
 volumes:

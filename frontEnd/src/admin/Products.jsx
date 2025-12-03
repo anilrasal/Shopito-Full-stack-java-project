@@ -136,7 +136,7 @@ const Products = () => {
           </Paper>
 
           <Dialog open={openAdd} onClose={()=>setOpenAdd(false)}>
-              <AddProductForm onClose={()=>{setOpen(false);fetchProducts();}}/>
+              <AddProductForm onClose={()=>{setOpenAdd(false);fetchProducts();}}/>
           </Dialog>
 
           <Dialog open={!!editProduct} onClose={()=>setEditProduct(null)}>

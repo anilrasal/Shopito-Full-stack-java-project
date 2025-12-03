@@ -3,7 +3,7 @@ import axios from "axios";
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
     //TODO
     // Add auth token if needed:
     // Authorization: `Bearer ${token}`,
@@ -47,5 +47,14 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+API.interceptors.request.use((config) => {
+  const isFormData = config.data instanceof FormData;
+  console.log("Method:", config.method);
+  console.log("URL:", config.url);
+  console.log("Content-Type before:", config.headers["Content-Type"]);
+  console.log("Is FormData:", isFormData);
+  return config;
+});
 
 export default API;
