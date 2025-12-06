@@ -14,6 +14,9 @@ WORKDIR /app
 
 # Copy built jar 
 # if you like you can use COPY target/*.jar app.jar Wildcard
-COPY target/MyShopping-0.0.1-SNAPSHOT.jar app.jar
+# COPY target/MyShopping-0.0.1-SNAPSHOT.jar app.jar
+# Copy the JAR built in Stage 1
+COPY --from=build /app/target/*.jar app.jar
 
+EXPOSE 8080
 ENTRYPOINT [ "java","-jar","app.jar" ]
