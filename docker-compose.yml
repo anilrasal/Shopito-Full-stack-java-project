@@ -4,15 +4,17 @@ services:
     restart: on-failure
     # env_file:
     #   - ./backend/.env
-    command: ["./wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    # command: ["./wait-for-it.sh", "db:3306", "--", "java", "-jar", "app.jar"]
+    command: ["java", "-jar", "app.jar"]
     ports:
       - "8080:8080"
     environment:
+      JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
     volumes:
       - uploads_data:/app/uploads
 
@@ -30,24 +32,24 @@ services:
     depends_on:
       - backend
 
-  db:
-    image: mysql:8.0
-    environment:
-      # avoid using root user in your applications 
-      MYSQL_ROOT_PASSWORD: Root@123456
-      MYSQL_USER: user
-      MYSQL_PASSWORD: User@123456
-      MYSQL_DATABASE: shop
-    # optional: expose to host if you want to connect with local tools
-    # ports:
-    #   - "3307:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    volumes:
-      - db_data:/var/lib/mysql
+  # db:
+  #   image: mysql:8.0
+  #   environment:
+  #     # avoid using root user in your applications 
+  #     MYSQL_ROOT_PASSWORD: Root@123456
+  #     MYSQL_USER: user
+  #     MYSQL_PASSWORD: User@123456
+  #     MYSQL_DATABASE: shop
+  #   # optional: expose to host if you want to connect with local tools
+  #   # ports:
+  #   #   - "3307:3306"
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #   volumes:
+  #     - db_data:/var/lib/mysql
 volumes:
-  db_data:
+  # db_data:
   uploads_data:

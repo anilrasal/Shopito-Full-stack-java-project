@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,7 +27,7 @@ public class Product {
 
     // Use BigDecimal for monetary values to avoid floating point precision issues.
 
-    @Lob // @Lob for description → useful if you plan to support long-form HTML content.
+    @Column(columnDefinition = "TEXT") // @Lob for description → useful if you plan to support long-form HTML content.
 
     // If you want to store large text data, use @Lob annotation.
     private String description;
