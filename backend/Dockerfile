@@ -1,3 +1,11 @@
+# Stage 1: Build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+#State 2: Build stage
 # Use Eclipse Temurin instead of OpenJDK
 FROM eclipse-temurin:17-jdk-alpine
 
