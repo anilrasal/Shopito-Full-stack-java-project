@@ -16,7 +16,7 @@ public class SecurityCorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         // allow local dev origins with any port
         config.setAllowedOriginPatterns(
-                List.of("http://localhost:*", "http://127.0.0.1:*", "https://shopito-api.onrender.com"));
+                List.of("http://localhost:*", "http://127.0.0.1:*", "https://shopito-api-m3p8.onrender.com"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
