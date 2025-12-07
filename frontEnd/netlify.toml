@@ -4,11 +4,6 @@
   command = "npm run build"
   publish = "dist"   # or "build" if using CRA (React). Adjust to your framework.
 
-# ✅ SPA fallback: always serve index.html for unknown routes
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 # ✅ Proxy API calls to your Render backend
 [[redirects]]
@@ -23,3 +18,9 @@
   to = "https://shopito-api-m3p8.onrender.com/uploads/:splat"
   status = 200
   force = true
+
+# ✅ SPA fallback: always serve index.html for unknown routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
