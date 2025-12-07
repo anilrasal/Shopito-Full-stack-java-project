@@ -15,7 +15,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // all endpoints
                         .allowedOrigins("http://localhost:*", "http://127.0.0.1:*",
-                                "https://shopito-api-m3p8.onrender.com") // frontend
+                                "https://shopito-api-m3p8.onrender.com", "https://shopitoweb.netlify.app") // frontend
                         // origin
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
